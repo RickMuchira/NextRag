@@ -17,19 +17,15 @@ interface PaperProps {
 export function FloatingPaper({ count = 5 }) {
   const [papers, setPapers] = useState<PaperProps[]>([])
   const [mounted, setMounted] = useState(false)
-  const [dimensions, setDimensions] = useState({ width: 1200, height: 800 })
 
   useEffect(() => {
     // Only run on client side
     setMounted(true)
     
-    // Update dimensions only on client side
+    // Generate paper positions only on client side
     const width = window.innerWidth
     const height = window.innerHeight
     
-    setDimensions({ width, height })
-    
-    // Generate paper positions only on client side
     const generatedPapers = Array.from({ length: count }).map(() => ({
       x: Math.random() * width,
       y: Math.random() * height,
@@ -43,10 +39,19 @@ export function FloatingPaper({ count = 5 }) {
     setPapers(generatedPapers)
 
     const handleResize = () => {
-      setDimensions({
-        width: window.innerWidth,
-        height: window.innerHeight,
-      })
+      const newWidth = window.innerWidth
+      const newHeight = window.innerHeight
+      
+      // Regenerate papers on resize
+      setPapers(Array.from({ length: count }).map(() => ({
+        x: Math.random() * newWidth,
+        y: Math.random() * newHeight,
+        x2: Math.random() * newWidth,
+        y2: Math.random() * newHeight,
+        x3: Math.random() * newWidth,
+        y3: Math.random() * newHeight,
+        duration: 20 + Math.random() * 10
+      })))
     }
 
     window.addEventListener("resize", handleResize)
