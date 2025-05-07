@@ -40,6 +40,12 @@ export default function Navbar() {
           Documents
         </Link>
         <Link
+          href="/courses"
+          className={`text-gray-300 hover:text-white ${pathname === "/courses" ? "text-white" : ""}`}
+        >
+          Courses
+        </Link>
+        <Link
           href="/assistant"
           className={`text-gray-300 hover:text-white ${pathname === "/assistant" ? "text-white" : ""}`}
         >

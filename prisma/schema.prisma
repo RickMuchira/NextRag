@@ -1,0 +1,129 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+}
+
+// User model
+model User {
+  id            String       @id @default(cuid())
+  name          String?
+  email         String       @unique
+  image         String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  role          Role         @default(USER)
+  documents     Document[]
+  annotations   Annotation[]
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+// Course model (top level)
+model Course {
+  id          String     @id @default(cuid())
+  name        String
+  description String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  years       Year[]     // Course has many Years
+  documents   Document[] // Documents can be attached directly to courses
+}
+
+// Year model (second level)
+model Year {
+  id          String     @id @default(cuid())
+  name        String
+  yearNumber  Int
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  courseId    String
+  course      Course     @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  semesters   Semester[] // Year has many Semesters
+}
+
+// Semester model (third level)
+model Semester {
+  id             String     @id @default(cuid())
+  name           String
+  semesterNumber Int
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  yearId         String     // Belongs to Year, not directly to Course
+  year           Year       @relation(fields: [yearId], references: [id], onDelete: Cascade)
+  units          Unit[]     // Semester has many Units
+  documents      Document[] // Documents can be attached to semesters
+}
+
+// Unit model (fourth level)
+model Unit {
+  id          String     @id @default(cuid())
+  name        String
+  unitCode    String     // Added as per the document spec
+  description String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  semesterId  String     // Belongs to Semester, not directly to Course
+  semester    Semester   @relation(fields: [semesterId], references: [id], onDelete: Cascade)
+  documents   Document[] // Documents can be attached to units
+}
+
+// Document model (can be attached to any level)
+model Document {
+  id          String       @id @default(cuid())
+  title       String
+  description String?
+  fileName    String
+  fileSize    Int
+  fileType    String
+  blobUrl     String
+  pages       Int?
+  author      String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  uploaderId  String
+  uploader    User         @relation(fields: [uploaderId], references: [id], onDelete: Cascade)
+  courseId    String?
+  course      Course?      @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  semesterId  String?      // Added missing relation field
+  semester    Semester?    @relation(fields: [semesterId], references: [id], onDelete: SetNull) // Added missing relation
+  unitId      String?
+  unit        Unit?        @relation(fields: [unitId], references: [id], onDelete: SetNull)
+  tags        Tag[]
+  annotations Annotation[]
+}
+
+// Tag model
+model Tag {
+  id          String     @id @default(cuid())
+  name        String     @unique
+  documents   Document[]
+}
+
+// Annotation model
+model Annotation {
+  id          String    @id @default(cuid())
+  content     String
+  pageNumber  Int
+  positionX   Float?
+  positionY   Float?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  documentId  String
+  document    Document  @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
